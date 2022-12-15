@@ -220,3 +220,86 @@ x := 10
 x, y := 30, "hello"
 ```
 
+- AVOID ```:=```: 
+  - Initializing a variable to its zero value
+    - use ```var x int``
+  - When the literal is not the type for the variable
+    - use ```var x byte = 20``` 
+  - You should rarely declare variables outside of functions
+
+##### const
+
+```go
+const x int64 = 10
+```
+
+```const``` in Go is very limited. Constants in Go are a way to give names to literals. They can only hold values that the compiler can figure out at __compile time__
+
+- Contants can be typed or untyped
+- Untyped constant works like a literal it has no type of its own, but dows a default type that is used when no other type can be inferred. A typed constant can only be directly assigned to a variable of that type
+
+#### Unused Variables
+
+- Go requires that every declared local variable must be read. It is a compile-time error to declare a local variable and not read its value.
+- Go do not catch unused assigments: use ```golangci-lint run```
+
+## 3. Composite Types
+
+### Arrays
+
+- Arrays are rarely used directly in Go
+- All the elements in the array must be of the type that is specified
+- First, you specify the size of the array and the type of the elemnts in the arrray 
+
+```go
+var x [3]int // Zero values 0 0 0 
+
+var x = [12]int{1, 5:4, 6, 10: 100, 15} // 1 0 0 0 0 4 6 0 0 0 0 100 15
+
+var x = [...]int{10, 20, 30} // 10 20 30
+```
+
+Arrays in Go are unusual because Go considers the size of the array to be part of the type of the array. This also means that you cannot use a variable to specify the size of an array because types must be resolved at compile time, not at runtime
+
+>> You can't use type conversion to conver arrays of different sizes to identical types. Because you can't convert arrays of different sizes into each other.
+
+### Slices
+
+Most of the times, a slice is what you should use to a data structure that holds a sequence of values. What makes slices so useful is that the length is not part of the type of a slice. this removes the limiattions of arrays. We can write a single function that processes slices of any size. And we an grow slices as needed
+
+Working with silices looks quite a bit like working with arrays, but there are subtle differences. The first thing to notice is that we don't specify the size of the slice when we declare it
+
+```go
+var x = []int{10, 20, 30}
+// [n] or [...] makes an array
+// [] makes an slice
+
+var x []int // nil
+// nil is similar, but slightly different from the null in other languages
+// nil represents the lack of a value for some types
+```
+
+- slices are not comparable
+- the only thing you can compare a slice with is nil
+  - (my_slice==nil)
+
+>> The reflect package contains a function called DeepEqual that can compare almost anything, including slices. It's primarily intented for testing
+
+Bult in functions in Go to work with slices:
+
+```go
+var s = []int{1, 3, 5}
+var x = 3
+var y = [3]int{7, 9, 11}
+
+fmt.Println(len(s))
+s = append(s, x) // Takes at least two parameters, a slice of any type and a value of that type
+y = append(s, y...) // ... is a variadic input
+```
+
+Go is a call by value language. Every time you pass a parameter to a function, Go makes a copy of the value that is passed in. Padding a slice to the append function actually passes a copy of the slice to the function. The function adds the values to the copy of the slice and returns the copy. You them assign the returned slice back to the variable in the calling function
+
+#### Capacity
+
+
+
