@@ -31,6 +31,11 @@ func Delete(key string) error {
 	delete(capitals, key)
 	return nil
 }
+
+func defaultHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hola mundo!\n"))
+}
+
 func keyValuePutHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -59,8 +64,9 @@ func keyValuePutHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("v1/{key}", keyValuePutHandler).
-		Methods("PUT")
+	r.HandleFunc("/", defaultHandler)
+	r.HandleFunc("/v1/{key}", keyValuePutHandler).Methods("PUT")
+	r.HandleFunc("/v1", defaultHandler).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
