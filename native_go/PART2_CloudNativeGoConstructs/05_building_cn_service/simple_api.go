@@ -96,12 +96,18 @@ func keyValueDeleteHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := mux.NewRouter()
 
+<<<<<<< HEAD
 	r.HandleFunc("/v1/{key}", keyValueGetHandler).
 		Methods("GET")
 	r.HandleFunc("/v1/{key}", keyValuePutHandler).
 		Methods("PUT")
 	r.HandleFunc("/v1/{key}", keyValueDeleteHandler).
 		Methods("DELETE")
+=======
+	r.HandleFunc("/", defaultHandler)
+	r.HandleFunc("/v1/{key}", keyValuePutHandler).Methods("PUT")
+	r.HandleFunc("/v1", defaultHandler).Methods("GET")
+>>>>>>> cb2d87c53790d085538f5029c55b54366c6fce2b
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
