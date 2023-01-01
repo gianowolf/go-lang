@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	size int = 10
+	tries int = 50
 )
 
 var (
-	boxes []int
+	// boxes  = []int{1, 2, 0, 4, 5, 3}
+	boxes  []int
+	values []bool
 )
 
 func newRand() *rand.Rand {
@@ -25,14 +27,14 @@ func orderedSliceMake(slice_size int) []int {
 
 	s := make([]int, slice_size, slice_size)
 
-	for i := 0; i < size; i++ {
+	for i := 0; i < slice_size; i++ {
 		s[i] = i
 	}
 
 	return s
 }
 
-func fillBoxes() []int {
+func fillBoxes(size int) []int {
 
 	r := newRand()
 
@@ -48,41 +50,59 @@ func fillBoxes() []int {
 
 	return disordered_boxes
 }
-func main() {
 
-	start := time.Now()
-	boxes = fillBoxes()
-	elapsed := time.Since(start)
-	fmt.Println(boxes, elapsed)
+func escape(size int) int {
 
-	return
+	boxes := fillBoxes(size)
+
 	for prisioner := 0; prisioner < size; prisioner++ {
-
-		fmt.Println()
-		fmt.Println("Prisionero ", prisioner)
+		success := false
 		max_attemps := size / 2
 		attemp := 1
 
 		paper := boxes[prisioner]
-		fmt.Printf("Intento %d: Encontro el papel %d en la caja con su numero \n", attemp, paper)
 		next_box := paper
 
 		for {
 			attemp++
 			paper = boxes[next_box]
-			fmt.Printf("Intento %d: Encontro el papel %d en la caja %d \n", attemp, paper, next_box)
 
 			if prisioner == paper {
-				fmt.Println("Encontro el papel con su numero en la caja", next_box)
+				success = true
 				break
 			}
 
 			next_box = paper
 
 			if attemp >= max_attemps {
-				fmt.Println("El prisionero llego su limite de intentos")
 				break
 			}
 		}
+
+		if !success {
+			return 0
+		}
 	}
+	return 1
+}
+
+func newExperiment(size int) float64 {
+
+	var success int
+	for i := 0; i < tries; i++ {
+		success += escape(size)
+	}
+
+	return float64(success) / float64(tries)
+}
+
+func main() {
+
+	size := 300_000
+	fmt.Printf("promedio de exito con %d cajas: %f\n", size, newExperiment(size))
+	// for size < 200_000 {
+	// 	fmt.Printf("promedio de exito con %d cajas: %f\n", size, newExperiment(size))
+	// 	size *= 10
+	// }
+
 }

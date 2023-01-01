@@ -7,55 +7,58 @@ import (
 )
 
 const (
-	size int = 10
+	size int = 8
 )
 
 var (
-	boxes []int
+	// boxes  = []int{1, 2, 0, 4, 5, 3}
+	boxes  []int
+	values []bool
 )
 
-func newRand() *rand.Rand {
+func fillBoxes() []int {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 
-	return r
-}
-
-func orderedSliceMake(slice_size int) []int {
-
-	s := make([]int, slice_size, slice_size)
+	disordered_boxes := make([]int, 0, size)
+	ordered_boxes := make([]int, size, size)
 
 	for i := 0; i < size; i++ {
-		s[i] = i
+		ordered_boxes[i] = i
 	}
 
-	return s
-}
-
-func fillBoxes() []int {
-
-	r := newRand()
-
-	disordered_boxes := make([]int, 0, size)
-	ordered_boxes := orderedSliceMake(size)
+	fmt.Println("Ordenadas:", ordered_boxes)
+	fmt.Println("Desordenadas:", disordered_boxes)
+	fmt.Println()
 
 	for i := size; i > 0; i-- {
+		fmt.Println("Iteracion: ", i)
+
 		pos := r.Intn(i)
+		fmt.Println("Posicion:", pos)
+
 		num := ordered_boxes[pos]
+		fmt.Println("Numero: ", num)
+
 		disordered_boxes = append(disordered_boxes, num)
 		ordered_boxes = append(ordered_boxes[:pos], ordered_boxes[pos+1:]...)
+
+		fmt.Println("Ordenadas:", ordered_boxes)
+		fmt.Println("Desordenadas:", disordered_boxes)
+		fmt.Println()
 	}
 
 	return disordered_boxes
+
 }
+
 func main() {
 
-	start := time.Now()
-	boxes = fillBoxes()
-	elapsed := time.Since(start)
-	fmt.Println(boxes, elapsed)
+	boxes := fillBoxes()
+	fmt.Println(boxes)
 
 	return
+
 	for prisioner := 0; prisioner < size; prisioner++ {
 
 		fmt.Println()
