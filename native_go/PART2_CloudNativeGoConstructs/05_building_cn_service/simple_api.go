@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,11 @@ type EventType byte
 type TransactionLogger interface {
 	WriteDelete(key string)
 	WritePut(key, value string)
+	Err() <-chan error
+
+	ReadEvents() (<-chan Event, <-chan error)
+
+	Run()
 }
 
 const (
@@ -38,10 +44,10 @@ var ErrorNoSuchKey = errors.New("no such key")
 /*	Ordered list of mutating events */
 /* * * * * * * * * * * * * * * * * * * */
 type FileTransactionLogger struct {
-	events      chan<- Event /* W-Only CH for seding EV */
-	errors      <-chan error /* R-Only CH for receive ERR */
-	lastSeuence uint64       /* last used event sequence number */
-	file        *os.File     /* location of the transaction log */
+	events       chan<- Event /* W-Only CH for seding EV */
+	errors       <-chan error /* R-Only CH for receive ERR */
+	lastSequence uint64       /* last used event sequence number */
+	file         *os.File     /* location of the transaction log */
 }
 
 func (l *FileTransactionLogger) WritePut(key, value string) {
@@ -54,6 +60,67 @@ func (l *FileTransactionLogger) WriteDelete(key string) {
 
 func (l *FileTransactionLogger) Err() <-chan error {
 	return l.errors
+}
+
+func (l *FileTransactionLogger) Run() {
+	events := make(chan Event, 16)
+	l.events = events
+
+	errors := make(chan error, 1)
+	l.errors = errors
+
+	go func() {
+		for e := range events {
+			l.lastSequence++
+
+			_, err := fmt.Fprint(
+				l.file,
+				"%d\t%d\t%s\t%s\n",
+				l.lastSequence, e.EventType, e.Key, e.Value)
+
+			if err != nil {
+				errors <- err
+				return
+			}
+		}
+	}()
+}
+
+func (l *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
+	scanner := bufio.NewScanner(l.file)
+	outEvent := make(chan Event)
+	outError := make(chan error, 1)
+
+	go func() {
+		var e Event
+
+		defer close(outEvent) // Close channels at goroutine end
+		defer close(outError)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			if _, err := fmt.Sscanf(line, "%d\t%d\t%s\t%s", &e.Sequence, &e.EventType, &e.Key, &e.Value); err != nil {
+				outError <- fmt.Errorf("input parse error: %w", err)
+				return
+			}
+
+			// Sequence number check
+			if l.lastSequence >= e.Sequence {
+				outError <- fmt.Errorf("transaction numbers out of sequence")
+				return
+			}
+
+			l.lastSequence = e.Sequence // Updated used sequnece number
+
+			outEvent <- e
+		}
+		if err := scanner.Err(); err != nil {
+			outError <- fmt.Errorf("transaction log read failure: %w", err)
+		}
+	}()
+
+	return outEvent, outError
 }
 
 func NewFileTransactionLogger(filename string) (TransactionLogger, error) {

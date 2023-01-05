@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-const (
-	size int = 10
-)
-
 var (
 	boxes []int
 )
